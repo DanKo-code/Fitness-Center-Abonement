@@ -262,7 +262,7 @@ func (c *AbonementgRPC) DeleteAbonementById(ctx context.Context, request *abonem
 	return deleteAbonementByIdResponse, nil
 }
 
-func (c *AbonementgRPC) GetAbonementes(ctx context.Context, _ *emptypb.Empty) (*abonementProtobuf.GetAbonementsResponse, error) {
+func (c *AbonementgRPC) GetAbonements(ctx context.Context, _ *emptypb.Empty) (*abonementProtobuf.GetAbonementsResponse, error) {
 
 	abonementes, err := c.abonementUseCase.GetAbonementes(ctx)
 	if err != nil {
