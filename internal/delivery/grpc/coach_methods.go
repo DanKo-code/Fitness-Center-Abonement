@@ -292,6 +292,41 @@ func (c *AbonementgRPC) GetAbonements(ctx context.Context, _ *emptypb.Empty) (*a
 	return response, nil
 }
 
+func (c *AbonementgRPC) GetAbonementsWithServices(ctx context.Context, _ *emptypb.Empty) (*abonementProtobuf.GetAbonementsWithServicesResponse, error) {
+	abonementsWithServices, err := c.abonementUseCase.GetAbonementsWithServices(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var abonementsWithServicesForResponse []*abonementProtobuf.AbonementWithServices
+	for _, abonementWithServices := range abonementsWithServices {
+
+		abonementObject := &abonementProtobuf.AbonementObject{
+			Id:           abonementWithServices.Abonement.Id.String(),
+			Title:        abonementWithServices.Abonement.Title,
+			Validity:     abonementWithServices.Abonement.Validity,
+			VisitingTime: abonementWithServices.Abonement.VisitingTime,
+			Photo:        abonementWithServices.Abonement.Photo,
+			Price:        int32(abonementWithServices.Abonement.Price),
+			CreatedTime:  abonementWithServices.Abonement.CreatedTime.String(),
+			UpdatedTime:  abonementWithServices.Abonement.UpdatedTime.String(),
+		}
+
+		abonementWithServices := &abonementProtobuf.AbonementWithServices{
+			Abonement: abonementObject,
+			Services:  abonementWithServices.Services,
+		}
+
+		abonementsWithServicesForResponse = append(abonementsWithServicesForResponse, abonementWithServices)
+	}
+
+	response := &abonementProtobuf.GetAbonementsWithServicesResponse{
+		AbonementsWithServices: abonementsWithServicesForResponse,
+	}
+
+	return response, nil
+}
+
 func GetObjectData[T any, R any](
 	g *grpc.ClientStreamingServer[T, R],
 	extractObjectData func(chunk *T) interface{},

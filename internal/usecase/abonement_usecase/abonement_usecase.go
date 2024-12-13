@@ -6,16 +6,19 @@ import (
 	customErrors "github.com/DanKo-code/Fitness-Center-Abonement/internal/errors"
 	"github.com/DanKo-code/Fitness-Center-Abonement/internal/models"
 	"github.com/DanKo-code/Fitness-Center-Abonement/internal/repository"
+	"github.com/DanKo-code/Fitness-Center-Abonement/pkg/logger"
+	serviceGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.service"
 	"github.com/google/uuid"
 	"time"
 )
 
 type AbonementUseCase struct {
 	abonementRepo repository.AbonementRepository
+	serviceClient *serviceGRPC.ServiceClient
 }
 
-func NewAbonementUseCase(abonementRepo repository.AbonementRepository) *AbonementUseCase {
-	return &AbonementUseCase{abonementRepo: abonementRepo}
+func NewAbonementUseCase(abonementRepo repository.AbonementRepository, serviceClient *serviceGRPC.ServiceClient) *AbonementUseCase {
+	return &AbonementUseCase{abonementRepo: abonementRepo, serviceClient: serviceClient}
 }
 
 func (c *AbonementUseCase) CreateAbonement(
@@ -99,4 +102,57 @@ func (c *AbonementUseCase) GetAbonementes(
 	}
 
 	return abonementes, nil
+}
+
+func (c *AbonementUseCase) GetAbonementsWithServices(
+	ctx context.Context,
+) ([]*dtos.AbonementWithServices, error) {
+	abonements, err := c.abonementRepo.GetAbonementes(ctx)
+	if err != nil {
+		logger.ErrorLogger.Printf("Failed GetAbonementes: %s", err)
+		return nil, err
+	}
+
+	getAbonementsServicesRequest := &serviceGRPC.GetAbonementsServicesRequest{}
+
+	for _, abonement := range abonements {
+		getAbonementsServicesRequest.AbonementIds =
+			append(
+				getAbonementsServicesRequest.AbonementIds,
+				abonement.Id.String(),
+			)
+	}
+
+	getAbonementsServicesResponse, err := (*c.serviceClient).GetAbonementsServices(ctx, getAbonementsServicesRequest)
+	if err != nil {
+		logger.ErrorLogger.Printf("Failed GetAbonementsServices: %s", err)
+		return nil, err
+	}
+
+	var abonementWithServices []*dtos.AbonementWithServices
+
+	//add abonements
+	for _, abonement := range abonements {
+
+		aws := &dtos.AbonementWithServices{
+			Abonement: abonement,
+			Services:  nil,
+		}
+
+		abonementWithServices = append(abonementWithServices, aws)
+	}
+
+	//add services
+	for _, extValue := range getAbonementsServicesResponse.AbonementIdsWithServices {
+
+		abonementId := extValue.AbonementId
+
+		for key, value := range abonementWithServices {
+			if value.Abonement.Id.String() == abonementId {
+				abonementWithServices[key].Services = append(abonementWithServices[key].Services, extValue.ServiceObjects...)
+			}
+		}
+	}
+
+	return abonementWithServices, nil
 }
