@@ -98,9 +98,9 @@ func (abonementRep *AbonementRepository) UpdateAbonement(ctx context.Context, cm
 }
 
 func (abonementRep *AbonementRepository) DeleteAbonementById(ctx context.Context, id uuid.UUID) error {
-	_, err := abonementRep.db.NamedExecContext(ctx, `
+	_, err := abonementRep.db.ExecContext(ctx, `
 		DELETE FROM "abonement"
-		WHERE id = :id`, id)
+		WHERE id = $1`, id)
 	if err != nil {
 		logger.ErrorLogger.Printf("Error DeleteAbonement: %v", err)
 		return err
