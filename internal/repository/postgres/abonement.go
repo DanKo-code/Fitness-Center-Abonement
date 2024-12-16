@@ -34,11 +34,11 @@ func (abonementRep *AbonementRepository) CreateAbonement(ctx context.Context, ab
 }
 
 func (abonementRep *AbonementRepository) GetAbonementById(ctx context.Context, id uuid.UUID) (*models.Abonement, error) {
-	var abonement *models.Abonement
-	err := abonementRep.db.GetContext(ctx, &abonement, `
+	abonement := &models.Abonement{}
+	err := abonementRep.db.GetContext(ctx, abonement, `
 		SELECT id, title, validity,visiting_time, photo, price, created_time, updated_time
 		FROM "abonement"
-		WHERE id = :id`, id)
+		WHERE id = $1`, id)
 	if err != nil {
 		logger.ErrorLogger.Printf("Error GetAbonementById: %v", err)
 		return nil, err

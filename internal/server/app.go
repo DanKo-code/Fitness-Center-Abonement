@@ -65,7 +65,7 @@ func NewAppGRPC(cloudConfig *models.CloudConfig) (*AppGRPC, error) {
 
 	gRPCServer := grpc.NewServer()
 
-	userGRPC.RegisterAbonementServer(gRPCServer, abonementUseCase, localStackUseCase)
+	userGRPC.RegisterAbonementServer(gRPCServer, abonementUseCase, localStackUseCase, &serviceClient)
 
 	return &AppGRPC{
 		gRPCServer:       gRPCServer,

@@ -8,12 +8,14 @@ import (
 	"github.com/DanKo-code/Fitness-Center-Abonement/internal/usecase"
 	"github.com/DanKo-code/Fitness-Center-Abonement/pkg/logger"
 	abonementProtobuf "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.abonement"
+	serviceGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.service"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
+	"reflect"
 	"time"
 )
 
@@ -24,10 +26,22 @@ type AbonementgRPC struct {
 
 	abonementUseCase usecase.AbonementUseCase
 	cloudUseCase     usecase.CloudUseCase
+	serviceClient    *serviceGRPC.ServiceClient
 }
 
-func RegisterAbonementServer(gRPC *grpc.Server, abonementUseCase usecase.AbonementUseCase, cloudUseCase usecase.CloudUseCase) {
-	abonementProtobuf.RegisterAbonementServer(gRPC, &AbonementgRPC{abonementUseCase: abonementUseCase, cloudUseCase: cloudUseCase})
+func RegisterAbonementServer(
+	gRPC *grpc.Server,
+	abonementUseCase usecase.AbonementUseCase,
+	cloudUseCase usecase.CloudUseCase,
+	serviceClient *serviceGRPC.ServiceClient,
+) {
+	abonementProtobuf.RegisterAbonementServer(
+		gRPC,
+		&AbonementgRPC{
+			abonementUseCase: abonementUseCase,
+			cloudUseCase:     cloudUseCase,
+			serviceClient:    serviceClient,
+		})
 }
 
 func (c *AbonementgRPC) CreateAbonement(g grpc.ClientStreamingServer[abonementProtobuf.CreateAbonementRequest, abonementProtobuf.CreateAbonementResponse]) error {
@@ -90,6 +104,28 @@ func (c *AbonementgRPC) CreateAbonement(g grpc.ClientStreamingServer[abonementPr
 		return status.Error(codes.Internal, "Failed to create abonement")
 	}
 
+	createAbonementServicesRequest := &serviceGRPC.CreateAbonementServicesRequest{
+		AbonementService: &serviceGRPC.AbonementService{
+			AbonementId: abonement.Id.String(),
+			ServiceId:   castedAbonementData.ServicesIds,
+		},
+	}
+	services, err := (*c.serviceClient).CreateAbonementServices(context.TODO(), createAbonementServicesRequest)
+	if err != nil {
+		return err
+	}
+
+	var abonementsServices *serviceGRPC.GetAbonementsServicesResponse
+	if services != nil {
+		getAbonementsServicesRequest := &serviceGRPC.GetAbonementsServicesRequest{
+			AbonementIds: []string{abonement.Id.String()},
+		}
+		abonementsServices, err = (*c.serviceClient).GetAbonementsServices(context.TODO(), getAbonementsServicesRequest)
+		if err != nil {
+			return err
+		}
+	}
+
 	abonementObject := &abonementProtobuf.AbonementObject{
 		Id:           abonement.Id.String(),
 		Title:        abonement.Title,
@@ -101,8 +137,21 @@ func (c *AbonementgRPC) CreateAbonement(g grpc.ClientStreamingServer[abonementPr
 		UpdatedTime:  abonement.UpdatedTime.String(),
 	}
 
+	var abonementWithServices *abonementProtobuf.AbonementWithServices
+	if abonementsServices != nil {
+		abonementWithServices = &abonementProtobuf.AbonementWithServices{
+			Abonement: abonementObject,
+			Services:  abonementsServices.AbonementIdsWithServices[0].ServiceObjects,
+		}
+	} else {
+		abonementWithServices = &abonementProtobuf.AbonementWithServices{
+			Abonement: abonementObject,
+			Services:  nil,
+		}
+	}
+
 	response := &abonementProtobuf.CreateAbonementResponse{
-		AbonementObject: abonementObject,
+		AbonementWithServices: abonementWithServices,
 	}
 
 	err = g.SendAndClose(response)
@@ -348,7 +397,7 @@ func GetObjectData[T any, R any](
 			return nil, nil, err
 		}
 
-		if ud := extractObjectData(chunk); ud != nil {
+		if ud := extractObjectData(chunk); ud != nil && !reflect.ValueOf(ud).IsNil() {
 			objectData = ud
 		}
 
