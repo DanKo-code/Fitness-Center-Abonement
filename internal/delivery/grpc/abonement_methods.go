@@ -9,6 +9,7 @@ import (
 	"github.com/DanKo-code/Fitness-Center-Abonement/pkg/logger"
 	abonementProtobuf "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.abonement"
 	serviceGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.service"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -212,7 +213,7 @@ func (c *AbonementgRPC) UpdateAbonement(g grpc.ClientStreamingServer[abonementPr
 		return status.Error(codes.InvalidArgument, "abonement data is empty")
 	}
 
-	castedAbonementData, ok := abonementData.(abonementProtobuf.AbonementDataForUpdate)
+	castedAbonementData, ok := abonementData.(*abonementProtobuf.AbonementDataForUpdate)
 	if !ok {
 		logger.ErrorLogger.Printf("abonement data is not of type AbonementProtobuf.AbonementDataForCreate")
 		return status.Error(codes.InvalidArgument, "abonement data is not of type AbonementProtobuf.AbonementDataForCreate")
@@ -236,7 +237,11 @@ func (c *AbonementgRPC) UpdateAbonement(g grpc.ClientStreamingServer[abonementPr
 	var previousPhoto []byte
 	if abonementPhoto != nil {
 		previousPhoto, err = c.cloudUseCase.GetObjectByName(context.TODO(), "abonement/"+cmd.Id.String())
-		if err != nil {
+
+		var respErr *types.NoSuchKey
+		if errors.As(err, &respErr) {
+
+		} else {
 			logger.ErrorLogger.Printf("Failed to get previos photo from cloud: %v", err)
 			return err
 		}
@@ -263,6 +268,28 @@ func (c *AbonementgRPC) UpdateAbonement(g grpc.ClientStreamingServer[abonementPr
 		return status.Error(codes.Internal, "Failed to create abonement")
 	}
 
+	updateAbonementServicesRequest := &serviceGRPC.UpdateAbonementServicesRequest{
+		AbonementService: &serviceGRPC.AbonementService{
+			AbonementId: abonement.Id.String(),
+			ServiceId:   castedAbonementData.ServicesIds,
+		},
+	}
+	services, err := (*c.serviceClient).UpdateAbonementServices(context.TODO(), updateAbonementServicesRequest)
+	if err != nil {
+		return err
+	}
+
+	var abonementsServices *serviceGRPC.GetAbonementsServicesResponse
+	if services != nil {
+		getAbonementsServicesRequest := &serviceGRPC.GetAbonementsServicesRequest{
+			AbonementIds: []string{abonement.Id.String()},
+		}
+		abonementsServices, err = (*c.serviceClient).GetAbonementsServices(context.TODO(), getAbonementsServicesRequest)
+		if err != nil {
+			return err
+		}
+	}
+
 	abonementObject := &abonementProtobuf.AbonementObject{
 		Id:           abonement.Id.String(),
 		Title:        abonement.Title,
@@ -274,14 +301,27 @@ func (c *AbonementgRPC) UpdateAbonement(g grpc.ClientStreamingServer[abonementPr
 		UpdatedTime:  abonement.UpdatedTime.String(),
 	}
 
-	updateAbonementResponse := &abonementProtobuf.UpdateAbonementResponse{
-		AbonementObject: abonementObject,
+	var abonementWithServices *abonementProtobuf.AbonementWithServices
+	if abonementsServices != nil {
+		abonementWithServices = &abonementProtobuf.AbonementWithServices{
+			Abonement: abonementObject,
+			Services:  abonementsServices.AbonementIdsWithServices[0].ServiceObjects,
+		}
+	} else {
+		abonementWithServices = &abonementProtobuf.AbonementWithServices{
+			Abonement: abonementObject,
+			Services:  nil,
+		}
 	}
 
-	err = g.SendAndClose(updateAbonementResponse)
+	response := &abonementProtobuf.UpdateAbonementResponse{
+		AbonementWithServices: abonementWithServices,
+	}
+
+	err = g.SendAndClose(response)
 	if err != nil {
 		logger.ErrorLogger.Printf("Failed to send abonement update response: %v", err)
-		return err
+		return status.Error(codes.Internal, "Failed to send abonement update response")
 	}
 
 	return nil
