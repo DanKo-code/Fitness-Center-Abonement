@@ -177,14 +177,15 @@ func (c *AbonementgRPC) GetAbonementById(ctx context.Context, request *abonement
 	}
 
 	abonementObject := &abonementProtobuf.AbonementObject{
-		Id:           abonement.Id.String(),
-		Title:        abonement.Title,
-		Validity:     abonement.Validity,
-		VisitingTime: abonement.VisitingTime,
-		Photo:        abonement.Photo,
-		Price:        int32(abonement.Price),
-		CreatedTime:  abonement.CreatedTime.String(),
-		UpdatedTime:  abonement.UpdatedTime.String(),
+		Id:            abonement.Id.String(),
+		Title:         abonement.Title,
+		Validity:      abonement.Validity,
+		VisitingTime:  abonement.VisitingTime,
+		Photo:         abonement.Photo,
+		Price:         int32(abonement.Price),
+		CreatedTime:   abonement.CreatedTime.String(),
+		UpdatedTime:   abonement.UpdatedTime.String(),
+		StripePriceId: abonement.StripePriceId,
 	}
 
 	response := &abonementProtobuf.GetAbonementByIdResponse{
@@ -334,14 +335,15 @@ func (c *AbonementgRPC) DeleteAbonementById(ctx context.Context, request *abonem
 	}
 
 	abonementObject := &abonementProtobuf.AbonementObject{
-		Id:           deletedAbonement.Id.String(),
-		Title:        deletedAbonement.Title,
-		Validity:     deletedAbonement.Validity,
-		VisitingTime: deletedAbonement.VisitingTime,
-		Photo:        deletedAbonement.Photo,
-		Price:        int32(deletedAbonement.Price),
-		CreatedTime:  deletedAbonement.CreatedTime.String(),
-		UpdatedTime:  deletedAbonement.UpdatedTime.String(),
+		Id:            deletedAbonement.Id.String(),
+		Title:         deletedAbonement.Title,
+		Validity:      deletedAbonement.Validity,
+		VisitingTime:  deletedAbonement.VisitingTime,
+		Photo:         deletedAbonement.Photo,
+		Price:         int32(deletedAbonement.Price),
+		CreatedTime:   deletedAbonement.CreatedTime.String(),
+		UpdatedTime:   deletedAbonement.UpdatedTime.String(),
+		StripePriceId: deletedAbonement.StripePriceId,
 	}
 
 	deleteAbonementByIdResponse := &abonementProtobuf.DeleteAbonementByIdResponse{
@@ -363,14 +365,15 @@ func (c *AbonementgRPC) GetAbonements(ctx context.Context, _ *emptypb.Empty) (*a
 	for _, abonement := range abonementes {
 
 		abonementObject := &abonementProtobuf.AbonementObject{
-			Id:           abonement.Id.String(),
-			Title:        abonement.Title,
-			Validity:     abonement.Validity,
-			VisitingTime: abonement.VisitingTime,
-			Photo:        abonement.Photo,
-			Price:        int32(abonement.Price),
-			CreatedTime:  abonement.CreatedTime.String(),
-			UpdatedTime:  abonement.UpdatedTime.String(),
+			Id:            abonement.Id.String(),
+			Title:         abonement.Title,
+			Validity:      abonement.Validity,
+			VisitingTime:  abonement.VisitingTime,
+			Photo:         abonement.Photo,
+			Price:         int32(abonement.Price),
+			CreatedTime:   abonement.CreatedTime.String(),
+			UpdatedTime:   abonement.UpdatedTime.String(),
+			StripePriceId: abonement.StripePriceId,
 		}
 
 		abonementObjects = append(abonementObjects, abonementObject)
@@ -391,14 +394,15 @@ func (c *AbonementgRPC) GetAbonementsWithServices(ctx context.Context, _ *emptyp
 	for _, abonementWithServices := range abonementsWithServices {
 
 		abonementObject := &abonementProtobuf.AbonementObject{
-			Id:           abonementWithServices.Abonement.Id.String(),
-			Title:        abonementWithServices.Abonement.Title,
-			Validity:     abonementWithServices.Abonement.Validity,
-			VisitingTime: abonementWithServices.Abonement.VisitingTime,
-			Photo:        abonementWithServices.Abonement.Photo,
-			Price:        int32(abonementWithServices.Abonement.Price),
-			CreatedTime:  abonementWithServices.Abonement.CreatedTime.String(),
-			UpdatedTime:  abonementWithServices.Abonement.UpdatedTime.String(),
+			Id:            abonementWithServices.Abonement.Id.String(),
+			Title:         abonementWithServices.Abonement.Title,
+			Validity:      abonementWithServices.Abonement.Validity,
+			VisitingTime:  abonementWithServices.Abonement.VisitingTime,
+			Photo:         abonementWithServices.Abonement.Photo,
+			Price:         int32(abonementWithServices.Abonement.Price),
+			CreatedTime:   abonementWithServices.Abonement.CreatedTime.String(),
+			UpdatedTime:   abonementWithServices.Abonement.UpdatedTime.String(),
+			StripePriceId: abonementWithServices.Abonement.StripePriceId,
 		}
 
 		abonementWithServices := &abonementProtobuf.AbonementWithServices{

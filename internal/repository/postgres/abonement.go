@@ -112,7 +112,7 @@ func (abonementRep *AbonementRepository) DeleteAbonementById(ctx context.Context
 func (abonementRep *AbonementRepository) GetAbonementes(ctx context.Context) ([]*models.Abonement, error) {
 	var abonementes []*models.Abonement
 
-	err := abonementRep.db.SelectContext(ctx, &abonementes, `SELECT id, title, validity,visiting_time, photo, price, created_time, updated_time FROM "abonement"`)
+	err := abonementRep.db.SelectContext(ctx, &abonementes, `SELECT id, title, validity,visiting_time, photo, price, created_time, updated_time, stripe_price_id  FROM "abonement"`)
 	if err != nil {
 		logger.ErrorLogger.Printf("Error GetAbonementes: %v", err)
 		return nil, err
