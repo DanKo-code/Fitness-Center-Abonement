@@ -36,7 +36,7 @@ func (abonementRep *AbonementRepository) CreateAbonement(ctx context.Context, ab
 func (abonementRep *AbonementRepository) GetAbonementById(ctx context.Context, id uuid.UUID) (*models.Abonement, error) {
 	abonement := &models.Abonement{}
 	err := abonementRep.db.GetContext(ctx, abonement, `
-		SELECT id, title, validity,visiting_time, photo, price, created_time, updated_time
+		SELECT id, title, validity,visiting_time, photo, price, created_time, updated_time, stripe_price_id
 		FROM "abonement"
 		WHERE id = $1`, id)
 	if err != nil {

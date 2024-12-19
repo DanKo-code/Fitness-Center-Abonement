@@ -9,6 +9,7 @@ import (
 	"github.com/DanKo-code/Fitness-Center-Abonement/internal/usecase"
 	user_usecase "github.com/DanKo-code/Fitness-Center-Abonement/internal/usecase/abonement_usecase"
 	"github.com/DanKo-code/Fitness-Center-Abonement/internal/usecase/localstack_usecase"
+	"github.com/DanKo-code/Fitness-Center-Abonement/internal/usecase/stripe_usecase"
 	"github.com/DanKo-code/Fitness-Center-Abonement/pkg/logger"
 	serviceGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.service"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -45,7 +46,9 @@ func NewAppGRPC(cloudConfig *models.CloudConfig) (*AppGRPC, error) {
 
 	serviceClient := serviceGRPC.NewServiceClient(connService)
 
-	abonementUseCase := user_usecase.NewAbonementUseCase(repository, &serviceClient)
+	suc := stripe_usecase.NewStripeUseCase(os.Getenv("STRIPE_KEY"))
+
+	abonementUseCase := user_usecase.NewAbonementUseCase(repository, &serviceClient, suc)
 
 	awsCfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion(cloudConfig.Region),

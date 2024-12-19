@@ -6,6 +6,7 @@ import (
 	customErrors "github.com/DanKo-code/Fitness-Center-Abonement/internal/errors"
 	"github.com/DanKo-code/Fitness-Center-Abonement/internal/models"
 	"github.com/DanKo-code/Fitness-Center-Abonement/internal/repository"
+	"github.com/DanKo-code/Fitness-Center-Abonement/internal/usecase"
 	"github.com/DanKo-code/Fitness-Center-Abonement/pkg/logger"
 	serviceGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.service"
 	"github.com/google/uuid"
@@ -15,10 +16,19 @@ import (
 type AbonementUseCase struct {
 	abonementRepo repository.AbonementRepository
 	serviceClient *serviceGRPC.ServiceClient
+	stripeUseCase usecase.StripeUseCase
 }
 
-func NewAbonementUseCase(abonementRepo repository.AbonementRepository, serviceClient *serviceGRPC.ServiceClient) *AbonementUseCase {
-	return &AbonementUseCase{abonementRepo: abonementRepo, serviceClient: serviceClient}
+func NewAbonementUseCase(
+	abonementRepo repository.AbonementRepository,
+	serviceClient *serviceGRPC.ServiceClient,
+	stripeUseCase usecase.StripeUseCase,
+) *AbonementUseCase {
+	return &AbonementUseCase{
+		abonementRepo: abonementRepo,
+		serviceClient: serviceClient,
+		stripeUseCase: stripeUseCase,
+	}
 }
 
 func (c *AbonementUseCase) CreateAbonement(
@@ -85,6 +95,12 @@ func (c *AbonementUseCase) DeleteAbonementById(
 	}
 
 	err = c.abonementRepo.DeleteAbonementById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	//TODO persists
+	err = c.stripeUseCase.ArchiveStripeProduct(abonement.StripePriceId)
 	if err != nil {
 		return nil, err
 	}
