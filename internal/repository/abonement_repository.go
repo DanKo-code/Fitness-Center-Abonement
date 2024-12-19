@@ -14,4 +14,5 @@ type AbonementRepository interface {
 	DeleteAbonementById(ctx context.Context, id uuid.UUID) error
 
 	GetAbonementes(ctx context.Context) ([]*models.Abonement, error)
+	GetAbonementsByIds(ctx context.Context, ids []uuid.UUID) ([]*models.Abonement, error)
 }

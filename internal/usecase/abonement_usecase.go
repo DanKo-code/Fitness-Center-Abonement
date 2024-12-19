@@ -15,4 +15,5 @@ type AbonementUseCase interface {
 
 	GetAbonementes(ctx context.Context) ([]*models.Abonement, error)
 	GetAbonementsWithServices(ctx context.Context) ([]*dtos.AbonementWithServices, error)
+	GetAbonementsByIds(ctx context.Context, ids []uuid.UUID) ([]*models.Abonement, error)
 }

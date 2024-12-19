@@ -420,6 +420,40 @@ func (c *AbonementgRPC) GetAbonementsWithServices(ctx context.Context, _ *emptyp
 	return response, nil
 }
 
+func (c *AbonementgRPC) GetAbonementsByIds(ctx context.Context, request *abonementProtobuf.GetAbonementsByIdsRequest) (*abonementProtobuf.GetAbonementsByIdsResponse, error) {
+
+	var ids []uuid.UUID
+	for _, id := range request.Ids {
+		ids = append(ids, uuid.MustParse(id))
+	}
+
+	abonements, err := c.abonementUseCase.GetAbonementsByIds(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	getAbonementsByIdsResponse := &abonementProtobuf.GetAbonementsByIdsResponse{
+		AbonementObjects: nil,
+	}
+	for _, abonement := range abonements {
+		abonementObject := &abonementProtobuf.AbonementObject{
+			Id:            abonement.Id.String(),
+			Title:         abonement.Title,
+			Validity:      abonement.Validity,
+			VisitingTime:  abonement.VisitingTime,
+			Photo:         abonement.Photo,
+			Price:         int32(abonement.Price),
+			CreatedTime:   abonement.CreatedTime.String(),
+			UpdatedTime:   abonement.UpdatedTime.String(),
+			StripePriceId: abonement.StripePriceId,
+		}
+
+		getAbonementsByIdsResponse.AbonementObjects = append(getAbonementsByIdsResponse.AbonementObjects, abonementObject)
+	}
+
+	return getAbonementsByIdsResponse, nil
+}
+
 func GetObjectData[T any, R any](
 	g *grpc.ClientStreamingServer[T, R],
 	extractObjectData func(chunk *T) interface{},

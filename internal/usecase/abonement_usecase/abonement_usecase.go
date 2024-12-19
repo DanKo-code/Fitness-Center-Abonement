@@ -156,3 +156,15 @@ func (c *AbonementUseCase) GetAbonementsWithServices(
 
 	return abonementWithServices, nil
 }
+
+func (c *AbonementUseCase) GetAbonementsByIds(
+	ctx context.Context,
+	ids []uuid.UUID,
+) ([]*models.Abonement, error) {
+	abonements, err := c.abonementRepo.GetAbonementsByIds(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return abonements, err
+}

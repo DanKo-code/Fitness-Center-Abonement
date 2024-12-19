@@ -120,3 +120,25 @@ func (abonementRep *AbonementRepository) GetAbonementes(ctx context.Context) ([]
 
 	return abonementes, nil
 }
+
+func (abonementRep *AbonementRepository) GetAbonementsByIds(ctx context.Context, ids []uuid.UUID) ([]*models.Abonement, error) {
+	query := `SELECT id, title, validity, visiting_time, photo, price, created_time, updated_time, stripe_price_id 
+			  FROM "abonement"
+			  WHERE id IN (?)`
+
+	query, args, err := sqlx.In(query, ids)
+	if err != nil {
+		return nil, fmt.Errorf("failed to bind ids: %w", err)
+	}
+
+	query = abonementRep.db.Rebind(query)
+
+	var abonements []*models.Abonement
+
+	err = abonementRep.db.SelectContext(ctx, &abonements, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return abonements, nil
+}
