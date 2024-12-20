@@ -1,6 +1,7 @@
 package stripe_usecase
 
 import (
+	"fmt"
 	"github.com/DanKo-code/Fitness-Center-Abonement/pkg/logger"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/price"
@@ -40,4 +41,31 @@ func (suc *StripeUseCase) ArchiveStripeProduct(stripePriceId string) error {
 
 	logger.InfoLogger.Printf("Product %s successfully has been archived\n", updatedProduct.ID)
 	return nil
+}
+
+func (suc *StripeUseCase) CreateStripeProductAndPrice(name string, amount int64, currency string) (string, error) {
+	stripe.Key = suc.stripeKey
+
+	productParams := &stripe.ProductParams{
+		Name: stripe.String(name),
+	}
+	createdProduct, err := product.New(productParams)
+	if err != nil {
+		return "", fmt.Errorf("failed to create stripe product: %v", err)
+	}
+	logger.InfoLogger.Printf("stripe product has been created: %s\n", createdProduct.ID)
+
+	priceParams := &stripe.PriceParams{
+		Product:    stripe.String(createdProduct.ID),
+		UnitAmount: stripe.Int64(amount),
+		Currency:   stripe.String(currency),
+	}
+
+	createdPrice, err := price.New(priceParams)
+	if err != nil {
+		return "", fmt.Errorf("failed to create stripe price: %v", err)
+	}
+	fmt.Printf("stripe price has been created: %s\n", createdPrice.ID)
+
+	return createdPrice.ID, nil
 }

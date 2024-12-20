@@ -47,6 +47,13 @@ func (c *AbonementUseCase) CreateAbonement(
 		CreatedTime:  time.Now(),
 	}
 
+	stripePriceId, err := c.stripeUseCase.CreateStripeProductAndPrice(abonement.Title, int64(abonement.Price*100), "usd")
+	if err != nil {
+		return nil, err
+	}
+
+	abonement.StripePriceId = stripePriceId
+
 	createdAbonement, err := c.abonementRepo.CreateAbonement(ctx, abonement)
 	if err != nil {
 		return nil, err

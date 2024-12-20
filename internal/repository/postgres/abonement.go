@@ -23,8 +23,8 @@ func NewAbonementRepository(db *sqlx.DB) *AbonementRepository {
 
 func (abonementRep *AbonementRepository) CreateAbonement(ctx context.Context, abonement *models.Abonement) (*models.Abonement, error) {
 	_, err := abonementRep.db.NamedExecContext(ctx, `
-	INSERT INTO "abonement" (id, title, validity,visiting_time, photo, price, created_time, updated_time)
-	VALUES (:id, :title, :validity, :visiting_time, :photo, :price, :created_time, :updated_time)`, *abonement)
+	INSERT INTO "abonement" (id, title, validity,visiting_time, photo, price, created_time, updated_time, stripe_price_id)
+	VALUES (:id, :title, :validity, :visiting_time, :photo, :price, :created_time, :updated_time, :stripe_price_id)`, *abonement)
 	if err != nil {
 		logger.ErrorLogger.Printf("Error CreateAbonement: %v", err)
 		return nil, err
