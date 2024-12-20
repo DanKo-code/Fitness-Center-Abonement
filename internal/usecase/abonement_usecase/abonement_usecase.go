@@ -17,17 +17,20 @@ type AbonementUseCase struct {
 	abonementRepo repository.AbonementRepository
 	serviceClient *serviceGRPC.ServiceClient
 	stripeUseCase usecase.StripeUseCase
+	cloudUseCase  usecase.CloudUseCase
 }
 
 func NewAbonementUseCase(
 	abonementRepo repository.AbonementRepository,
 	serviceClient *serviceGRPC.ServiceClient,
 	stripeUseCase usecase.StripeUseCase,
+	cloudUseCase usecase.CloudUseCase,
 ) *AbonementUseCase {
 	return &AbonementUseCase{
 		abonementRepo: abonementRepo,
 		serviceClient: serviceClient,
 		stripeUseCase: stripeUseCase,
+		cloudUseCase:  cloudUseCase,
 	}
 }
 
@@ -108,6 +111,12 @@ func (c *AbonementUseCase) DeleteAbonementById(
 
 	//TODO persists
 	err = c.stripeUseCase.ArchiveStripeProduct(abonement.StripePriceId)
+	if err != nil {
+		return nil, err
+	}
+
+	//todo delete photo from s3
+	err = c.cloudUseCase.DeleteObject(ctx, "abonement/"+abonement.Id.String())
 	if err != nil {
 		return nil, err
 	}
