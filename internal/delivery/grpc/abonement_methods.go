@@ -9,7 +9,6 @@ import (
 	"github.com/DanKo-code/Fitness-Center-Abonement/pkg/logger"
 	abonementProtobuf "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.abonement"
 	serviceGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.service"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -80,8 +79,9 @@ func (c *AbonementgRPC) CreateAbonement(g grpc.ClientStreamingServer[abonementPr
 	}
 
 	var photoURL string
+	randomID := uuid.New().String()
 	if abonementPhoto != nil {
-		url, err := c.cloudUseCase.PutObject(context.TODO(), abonementPhoto, "abonement/"+cmd.Id.String())
+		url, err := c.cloudUseCase.PutObject(context.TODO(), abonementPhoto, "abonement/"+randomID)
 		photoURL = url
 		if err != nil {
 			logger.ErrorLogger.Printf("Failed to create abonement photo in cloud: %v", err)
@@ -235,19 +235,9 @@ func (c *AbonementgRPC) UpdateAbonement(g grpc.ClientStreamingServer[abonementPr
 	}
 
 	var photoURL string
-	var previousPhoto []byte
+	randomID := uuid.New().String()
 	if abonementPhoto != nil {
-		previousPhoto, err = c.cloudUseCase.GetObjectByName(context.TODO(), "abonement/"+cmd.Id.String())
-
-		var respErr *types.NoSuchKey
-		if errors.As(err, &respErr) {
-
-		} else {
-			logger.ErrorLogger.Printf("Failed to get previos photo from cloud: %v", err)
-			return err
-		}
-
-		url, err := c.cloudUseCase.PutObject(context.TODO(), abonementPhoto, "abonement/"+cmd.Id.String())
+		url, err := c.cloudUseCase.PutObject(context.TODO(), abonementPhoto, "abonement/"+randomID)
 		photoURL = url
 		if err != nil {
 			logger.ErrorLogger.Printf("Failed to create abonement photo in cloud: %v", err)
@@ -259,14 +249,7 @@ func (c *AbonementgRPC) UpdateAbonement(g grpc.ClientStreamingServer[abonementPr
 
 	abonement, err := c.abonementUseCase.UpdateAbonement(context.TODO(), cmd)
 	if err != nil {
-
-		_, err := c.cloudUseCase.PutObject(context.TODO(), previousPhoto, "abonement/"+cmd.Id.String())
-		if err != nil {
-			logger.ErrorLogger.Printf("Failed to set previous photo in cloud: %v", err)
-			return status.Error(codes.Internal, "Failed to create abonement photo in cloud")
-		}
-
-		return status.Error(codes.Internal, "Failed to create abonement")
+		return status.Error(codes.Internal, "Failed to update abonement")
 	}
 
 	updateAbonementServicesRequest := &serviceGRPC.UpdateAbonementServicesRequest{
