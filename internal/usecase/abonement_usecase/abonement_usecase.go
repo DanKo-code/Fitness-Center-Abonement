@@ -82,17 +82,31 @@ func (c *AbonementUseCase) UpdateAbonement(
 	cmd *dtos.UpdateAbonementCommand,
 ) (*models.Abonement, error) {
 
-	err := c.abonementRepo.UpdateAbonement(ctx, cmd)
+	existingAbonement, err := c.abonementRepo.GetAbonementById(ctx, cmd.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	abonement, err := c.abonementRepo.GetAbonementById(ctx, cmd.Id)
+	if cmd.Price != 0 {
+		newStripePrices, err := c.stripeUseCase.CreateStripePriceAndAssignToProductDeactivateOldPrices(existingAbonement.StripePriceId, int64(cmd.Price*100), "usd")
+		if err != nil {
+			return nil, err
+		}
+
+		cmd.StripePriceId = newStripePrices
+	}
+
+	err = c.abonementRepo.UpdateAbonement(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return abonement, nil
+	updatedAbonement, err := c.abonementRepo.GetAbonementById(ctx, cmd.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedAbonement, nil
 }
 
 func (c *AbonementUseCase) DeleteAbonementById(

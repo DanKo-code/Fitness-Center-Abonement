@@ -258,20 +258,21 @@ func (c *AbonementgRPC) UpdateAbonement(g grpc.ClientStreamingServer[abonementPr
 			ServiceId:   castedAbonementData.ServicesIds,
 		},
 	}
-	services, err := (*c.serviceClient).UpdateAbonementServices(context.TODO(), updateAbonementServicesRequest)
-	if err != nil {
-		return err
-	}
 
-	var abonementsServices *serviceGRPC.GetAbonementsServicesResponse
-	if services != nil {
-		getAbonementsServicesRequest := &serviceGRPC.GetAbonementsServicesRequest{
-			AbonementIds: []string{abonement.Id.String()},
-		}
-		abonementsServices, err = (*c.serviceClient).GetAbonementsServices(context.TODO(), getAbonementsServicesRequest)
+	if len(castedAbonementData.ServicesIds) > 0 {
+		_, err := (*c.serviceClient).UpdateAbonementServices(context.TODO(), updateAbonementServicesRequest)
 		if err != nil {
 			return err
 		}
+	}
+
+	var abonementsServices *serviceGRPC.GetAbonementsServicesResponse
+	getAbonementsServicesRequest := &serviceGRPC.GetAbonementsServicesRequest{
+		AbonementIds: []string{abonement.Id.String()},
+	}
+	abonementsServices, err = (*c.serviceClient).GetAbonementsServices(context.TODO(), getAbonementsServicesRequest)
+	if err != nil {
+		return err
 	}
 
 	abonementObject := &abonementProtobuf.AbonementObject{

@@ -65,6 +65,9 @@ func (abonementRep *AbonementRepository) UpdateAbonement(ctx context.Context, cm
 	if cmd.Price != 0 {
 		setFields["price"] = cmd.Price
 	}
+	if cmd.StripePriceId != "" {
+		setFields["stripe_price_id"] = cmd.StripePriceId
+	}
 	setFields["updated_time"] = cmd.UpdatedTime
 
 	if len(setFields) == 0 {
