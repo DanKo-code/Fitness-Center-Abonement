@@ -2,6 +2,7 @@ package user_usecase
 
 import (
 	"context"
+	"fmt"
 	"github.com/DanKo-code/Fitness-Center-Abonement/internal/dtos"
 	customErrors "github.com/DanKo-code/Fitness-Center-Abonement/internal/errors"
 	"github.com/DanKo-code/Fitness-Center-Abonement/internal/models"
@@ -10,6 +11,7 @@ import (
 	"github.com/DanKo-code/Fitness-Center-Abonement/pkg/logger"
 	serviceGRPC "github.com/DanKo-code/FitnessCenter-Protobuf/gen/FitnessCenter.protobuf.service"
 	"github.com/google/uuid"
+	"strings"
 	"time"
 )
 
@@ -130,7 +132,16 @@ func (c *AbonementUseCase) DeleteAbonementById(
 	}
 
 	//todo delete photo from s3
-	err = c.cloudUseCase.DeleteObject(ctx, "abonement/"+abonement.Id.String())
+	prefix := "abonement/"
+	index := strings.Index(abonement.Photo, prefix)
+	var s3PhotoKey string
+	if index != -1 {
+		s3PhotoKey = abonement.Photo[index+len(prefix):]
+	} else {
+		logger.ErrorLogger.Printf("Prefix not found")
+		return nil, fmt.Errorf("prefix not found")
+	}
+	err = c.cloudUseCase.DeleteObject(ctx, "abonement/"+s3PhotoKey)
 	if err != nil {
 		return nil, err
 	}
