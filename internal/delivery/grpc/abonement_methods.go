@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -229,7 +230,7 @@ func (c *AbonementgRPC) UpdateAbonement(g grpc.ClientStreamingServer[abonementPr
 		UpdatedTime:  time.Now(),
 	}
 
-	_, err = c.abonementUseCase.GetAbonementById(context.TODO(), uuid.MustParse(castedAbonementData.Id))
+	existingAbonement, err := c.abonementUseCase.GetAbonementById(context.TODO(), uuid.MustParse(castedAbonementData.Id))
 	if err != nil {
 		return status.Error(codes.NotFound, "abonement not found")
 	}
@@ -237,6 +238,29 @@ func (c *AbonementgRPC) UpdateAbonement(g grpc.ClientStreamingServer[abonementPr
 	var photoURL string
 	randomID := uuid.New().String()
 	if abonementPhoto != nil {
+		if existingAbonement.Photo != "" {
+			prefix := "abonement/"
+			index := strings.Index(existingAbonement.Photo, prefix)
+			var s3PhotoKey string
+			if index != -1 {
+				s3PhotoKey = existingAbonement.Photo[index+len(prefix):]
+			} else {
+				logger.ErrorLogger.Printf("Prefix not found")
+			}
+
+			exists, err := c.cloudUseCase.ObjectExists(context.TODO(), "abonement/"+s3PhotoKey)
+			if err != nil {
+				return status.Error(codes.Internal, "can't find previous photo meta")
+			}
+
+			if exists {
+				err := c.cloudUseCase.DeleteObject(context.TODO(), "abonement/"+s3PhotoKey)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		url, err := c.cloudUseCase.PutObject(context.TODO(), abonementPhoto, "abonement/"+randomID)
 		photoURL = url
 		if err != nil {

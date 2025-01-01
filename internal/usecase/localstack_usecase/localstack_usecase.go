@@ -54,3 +54,16 @@ func (luc *LocalstackUseCase) DeleteObject(ctx context.Context, name string) err
 
 	return nil
 }
+
+func (luc *LocalstackUseCase) ObjectExists(ctx context.Context, name string) (bool, error) {
+	_, err := luc.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(luc.config.Bucket),
+		Key:    aws.String(name),
+	})
+	if err != nil {
+		logger.ErrorLogger.Printf("Failed to check object existence: %v", err)
+		return false, err
+	}
+
+	return true, nil
+}

@@ -31,7 +31,7 @@ func (suc *StripeUseCase) ArchiveStripeProduct(stripePriceId string) error {
 	productID := priceObject.Product.ID
 
 	params := &stripe.ProductParams{
-		Active: stripe.Bool(false), // Устанавливаем активность продукта в false
+		Active: stripe.Bool(false),
 	}
 
 	updatedProduct, err := product.Update(productID, params)
@@ -100,6 +100,30 @@ func (suc *StripeUseCase) CreateStripePriceAndAssignToProductDeactivateOldPrices
 	}
 
 	return newPrice.ID, nil
+}
+
+func (suc *StripeUseCase) UpdateStripeProductName(stripePriceId string, newName string) error {
+	stripe.Key = suc.stripeKey
+
+	priceObject, err := price.Get(stripePriceId, nil)
+	if err != nil {
+		logger.ErrorLogger.Printf("Error getting stripe id: %v\n", err)
+		return err
+	}
+
+	productID := priceObject.Product.ID
+
+	productParams := &stripe.ProductParams{
+		Name: stripe.String(newName),
+	}
+
+	updatedProduct, err := product.Update(productID, productParams)
+	if err != nil {
+		return fmt.Errorf("failed to update stripe product name: %v", err)
+	}
+
+	logger.InfoLogger.Printf("stripe product name has been updated: %s -> %s\n", updatedProduct.ID, newName)
+	return nil
 }
 
 func deactivateOldPrices(productID string, newPrice string) error {

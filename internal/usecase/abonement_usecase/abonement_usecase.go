@@ -98,6 +98,13 @@ func (c *AbonementUseCase) UpdateAbonement(
 		cmd.StripePriceId = newStripePrices
 	}
 
+	if cmd.Title != "" {
+		err := c.stripeUseCase.UpdateStripeProductName(existingAbonement.StripePriceId, cmd.Title)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	err = c.abonementRepo.UpdateAbonement(ctx, cmd)
 	if err != nil {
 		return nil, err
