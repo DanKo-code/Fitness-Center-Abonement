@@ -138,19 +138,20 @@ func (c *AbonementUseCase) DeleteAbonementById(
 		return nil, err
 	}
 
-	//todo delete photo from s3
-	prefix := "abonement/"
-	index := strings.Index(abonement.Photo, prefix)
-	var s3PhotoKey string
-	if index != -1 {
-		s3PhotoKey = abonement.Photo[index+len(prefix):]
-	} else {
-		logger.ErrorLogger.Printf("Prefix not found")
-		return nil, fmt.Errorf("prefix not found")
-	}
-	err = c.cloudUseCase.DeleteObject(ctx, "abonement/"+s3PhotoKey)
-	if err != nil {
-		return nil, err
+	if abonement.Photo != "" {
+		prefix := "abonement/"
+		index := strings.Index(abonement.Photo, prefix)
+		var s3PhotoKey string
+		if index != -1 {
+			s3PhotoKey = abonement.Photo[index+len(prefix):]
+		} else {
+			logger.ErrorLogger.Printf("Prefix not found")
+			return nil, fmt.Errorf("prefix not found")
+		}
+		err = c.cloudUseCase.DeleteObject(ctx, "abonement/"+s3PhotoKey)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return abonement, nil
