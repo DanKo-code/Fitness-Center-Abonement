@@ -143,5 +143,22 @@ func (abonementRep *AbonementRepository) GetAbonementsByIds(ctx context.Context,
 		return nil, err
 	}
 
+	if len(abonements) != len(ids) {
+
+		idAbonementMap := make(map[uuid.UUID]*models.Abonement, len(abonements))
+
+		for _, abonement := range abonements {
+			idAbonementMap[abonement.Id] = abonement
+		}
+
+		var res []*models.Abonement
+
+		for _, id := range ids {
+			res = append(res, idAbonementMap[id])
+		}
+
+		return res, nil
+	}
+
 	return abonements, nil
 }
