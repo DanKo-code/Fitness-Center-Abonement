@@ -52,7 +52,7 @@ func (c *AbonementUseCase) CreateAbonement(
 		CreatedTime:  time.Now(),
 	}
 
-	stripePriceId, err := c.stripeUseCase.CreateStripeProductAndPrice(abonement.Title, int64(abonement.Price*100), "usd")
+	stripePriceId, err := c.stripeUseCase.CreateStripeProductAndPrice(abonement.Title, int64(abonement.Price*100), "byn")
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (c *AbonementUseCase) UpdateAbonement(
 	}
 
 	if cmd.Price != 0 {
-		newStripePrices, err := c.stripeUseCase.CreateStripePriceAndAssignToProductDeactivateOldPrices(existingAbonement.StripePriceId, int64(cmd.Price*100), "usd")
+		newStripePrices, err := c.stripeUseCase.CreateStripePriceAndAssignToProductDeactivateOldPrices(existingAbonement.StripePriceId, int64(cmd.Price*100), "byn")
 		if err != nil {
 			return nil, err
 		}
